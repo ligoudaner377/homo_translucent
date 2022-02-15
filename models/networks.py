@@ -451,6 +451,27 @@ class ResnetPredictor(nn.Module):
         coeff = self.coeff_encoder(feature)
         return (normal, depth, rough, scatter, coeff)
 
+# this is twostage branch
+class ResnetPredictorSurface(nn.Module):
+    def __init__(self, input_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=9, padding_type='reflect'):
+        assert(n_blocks >= 0)
+        super(ResnetPredictorSurface, self).__init__()
+
+        self.feature_encoder = ResnetEncoder(input_nc, ngf, norm_layer, use_dropout, n_blocks, padding_type)
+        self.normal_decoder = ImageDecoder(3, ngf, norm_layer)
+        self.rough_decoder = ImageDecoder(1, ngf, norm_layer)
+        self.depth_decoder = ImageDecoder(1, ngf, norm_layer, isDepth=True)
+        self.radiance_encoder = FeatureEncoder(1, ngf, norm_layer, isActivation=True)
+        self.coeff_encoder = FeatureEncoder(27, ngf, norm_layer, isActivation=False)
+
+    def forward(self, input):
+        feature = self.feature_encoder(input)
+        normal = self.normal_decoder(feature)
+        depth = self.depth_decoder(feature)
+        rough = self.rough_decoder(feature)
+        radiance = self.radiance_encoder(feature)
+        coeff = self.coeff_encoder(feature)
+        return (normal, depth, rough, radiance, coeff)
 
 class ResnetPredictorRefine(nn.Module):
 
