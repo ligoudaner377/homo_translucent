@@ -2,8 +2,8 @@
              aspect_ratio: 1.0                           
                batch_size: 32                            
           checkpoints_dir: ./checkpoints                 
-                 dataroot: ./datasets/translucent        	[default: None]
-             dataset_mode: translucent                   
+                 dataroot: ./datasets/real               	[default: None]
+             dataset_mode: real                          	[default: translucent]
              display_freq: 12800                         
             display_ncols: 8                             
           display_winsize: 256                           
@@ -13,7 +13,6 @@
                 init_gain: 0.02                          
                 init_type: normal                        
                    isEdit: True                          
-               isOptimize: False                         
                   isTrain: False                         	[default: None]
                 isTwoshot: True                          
                 load_iter: 0                             	[default: 0]
@@ -21,12 +20,12 @@
                     model: edit_twoshot                  	[default: test]
                  n_epochs: 10                            
            n_epochs_decay: 10                            
-                     name: edit_twoshot_1                	[default: experiment_name]
+                     name: edit_twoshot                  	[default: experiment_name]
               netLightDec: basic_decoder                 
              netPredictor: resnet_predictor              
               netRenderer: resnet_renderer               
                       ngf: 64                            
-                 num_test: 18000                         
+                 num_test: 100                           
               num_threads: 8                             
                     phase: test                          
                print_freq: 12800                         
