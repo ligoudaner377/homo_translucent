@@ -32,7 +32,7 @@ python ./inference_real.py --dataroot "./datasets/real" --dataset_mode "real" --
 ```
 
 ### Train
-- Download the [dataset](). (not ready yet)
+- Download the [dataset]().
 - Unzip it to ./datasets/
 - To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097.
 - Train the model (change gpu_ids according your device)
