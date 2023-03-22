@@ -4,6 +4,7 @@ from options.test_options import TestOptions
 from data import create_dataset
 from models import create_model
 from PIL import Image
+import json
 
 def save_image(img, img_name, num, oup_dir):
     if not os.path.exists(os.path.join(oup_dir, num)):
@@ -17,11 +18,28 @@ def save_image(img, img_name, num, oup_dir):
         img = np.transpose(img, (1, 2, 0))
         Image.fromarray(img, 'RGB').save(os.path.join(oup_dir, num, '{}.png'.format(img_name)))
 
-def save_scatter_para(para, num, oup_dir):
+
+def save_data(model, num, oup_dir):
+    data = {}
     if not os.path.exists(os.path.join(oup_dir, num)):
         os.makedirs(os.path.join(oup_dir, num))
-    para = (para[0, :] * 0.5 + 0.5).cpu().numpy()
-    np.save(os.path.join(oup_dir, num, 'scatter_para.npy'), para)
+    coeffs_predict = model.coeffs_predict.squeeze().cpu().numpy()
+    scatter_predict = model.scatter_predict.squeeze().cpu().numpy()
+    g_predict = model.inverse_normalize_g(scatter_predict[0])
+    radiance_predict = model.inverse_normalize_radiance(scatter_predict[-1])
+    sigma_t_predict = model.inverse_normalize(scatter_predict[1:4])
+    albedo_predict = model.inverse_normalize_albedo(scatter_predict[4:7])
+
+    data['g_predict'] = float(g_predict)
+    data['albedo_predict'] = albedo_predict.tolist()
+    data['sigma_t_predict'] = sigma_t_predict.tolist()
+    data['coeffs_predict'] = coeffs_predict.tolist()
+    data['radiance_predict'] = float(radiance_predict)
+
+    # save data
+    with open(os.path.join(oup_dir, num, 'data.json'), 'w') as f:
+        json.dump(data, f)
+
 
 if __name__ == '__main__':
     opt = TestOptions().parse()  # get test options
@@ -43,23 +61,23 @@ if __name__ == '__main__':
         model.eval()
 
     img_list = ['normal_predict',
-                'albedo_predict',
                 'rough_predict',
                 'depth_predict_vis',
                 'direct_predict',
                 'scene_predict']
     for i, data in enumerate(dataset):
+
         if i >= opt.num_test:  # only apply our model to opt.num_test images.
             break
         model.set_input(data)  # unpack data from data loader
         model.test()
         model.compute_visuals()           # run inference
 
-        for img_name in img_list:
+        for img_name in img_list:         # save images, scattering parameters and illumination
             if hasattr(model, img_name):
                 img = getattr(model, img_name)
                 save_image(img, img_name, str(data['num'].item()), oup_dir)
-        save_scatter_para(model.scatter_predict, str(data['num'].item()), oup_dir)
+        save_data(model, str(data['num'].item()), oup_dir)
 
 
 

@@ -9,8 +9,6 @@ import scipy.ndimage as ndimage
 
 
 class RealDataset(BaseDataset):
-
-
     @staticmethod
     def modify_commandline_options(parser, is_train):
         """Add new dataset-specific options, and rewrite default values for existing options.

@@ -1,18 +1,46 @@
 import os
+import numpy as np
 import torch
+
 from options.test_options import TestOptions
 from data import create_dataset
 from models import create_model
-import numpy as np
 from PIL import Image
+import random
+import json
 
-def save_images(model, num, oup_dir, idx, edit_name):
-    scene_predict = model.scene_predict
-    scene_predict = torch.squeeze((scene_predict * 0.5 + 0.5) * model.binary_mask).permute(1, 2, 0).cpu().numpy()
-    scene_predict = (scene_predict * 255.0).astype(np.uint8)
-    if not os.path.exists(os.path.join(oup_dir, str(num))):
-        os.makedirs(os.path.join(oup_dir, str(num)))
-    Image.fromarray(scene_predict, 'RGB').save(os.path.join(oup_dir, str(num), '{}_{}.png'.format(edit_name, idx)))
+
+
+def save_image(img, img_name, oup_dir):
+    img = img[0, :, :, :]
+    img = (img * 255.0).cpu().numpy().astype(np.uint8)
+    if img.shape[0] == 1:
+        img = img[0, :, :]
+        Image.fromarray(img, 'L').save(oup_dir+'/{}.png'.format(img_name))
+    else:
+        img = np.transpose(img, (1, 2, 0))
+        Image.fromarray(img, 'RGB').save(oup_dir+'/{}.png'.format(img_name))
+
+def generate_random_scatter_para():
+    scatter_dict = {}
+
+    albedo_0 = [random.uniform(0.3, 0.95), random.uniform(0.3, 0.95), random.uniform(0.3, 0.95)]
+    albedo_1 = [random.uniform(0.3, 0.95), random.uniform(0.3, 0.95), random.uniform(0.3, 0.95)]
+    albedo_2 = [random.uniform(0.3, 0.95), random.uniform(0.3, 0.95), random.uniform(0.3, 0.95)]
+    r_list = list(np.linspace(albedo_0[0], albedo_1[0], 50)) + list(np.linspace(albedo_1[0], albedo_2[0], 50)) + list(np.linspace(albedo_2[0], albedo_0[0], 50))
+    g_list = list(np.linspace(albedo_0[1], albedo_1[1], 50)) + list(np.linspace(albedo_1[1], albedo_2[1], 50)) + list(np.linspace(albedo_2[1], albedo_0[1], 50))
+    b_list = list(np.linspace(albedo_0[2], albedo_1[2], 50)) + list(np.linspace(albedo_1[2], albedo_2[2], 50)) + list(np.linspace(albedo_2[2], albedo_0[2], 50))
+    albedo_list = [(r_list[i], g_list[i], b_list[i]) for i in range(150)]
+
+    sigma_t_list = list(np.linspace(0.2, 0.8, 50))
+
+    g_list = list(np.linspace(0.01, 0.89, 50))
+
+    scatter_dict['albedo'] = albedo_list
+    scatter_dict['sigma_t'] = sigma_t_list
+    scatter_dict['g'] = g_list
+    return scatter_dict
+
 
 if __name__ == '__main__':
     opt = TestOptions().parse()  # get test options
@@ -24,46 +52,62 @@ if __name__ == '__main__':
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
-    oup_dir = os.path.join(opt.results_dir, opt.name, opt.phase + '_' + opt.epoch, 'scene_edit')
-    if not os.path.exists(oup_dir):
-        os.mkdir(oup_dir)
+
     # test with eval mode. This only affects layers like batchnorm and dropout.
     if opt.eval:
         model.eval()
-    edit_list = [7373, 4491, 14748, 9847, 3670, 5040]
-    for i, data in enumerate(dataset):
-        if data['num'] in edit_list:
-            print('editing No.{}'.format(data['num'].item()))
-            model.set_input(data)  # unpack data from data loader
-            model.test()
 
-            original_surface_opacity = model.new_surface_opacity  # record the original parameter
-            original_radiance = model.new_radiance
+    edit_list = [4414, 1349, 6397, 2861, 11270, 8209, 11929,
+                 13689, 2287, 2483, 1039, 474, 5341, 1064, 10750]
+    for data in dataset:
+        num = data['num'].item()
+        if (num in edit_list) or opt.dataset_mode == 'real':
+            print('editing num: {}'.format(num))
+            if opt.dataset_mode == 'translucent':
+                with open('/home2/lch/project/render_data3/scene_edit/{}.json'.format(num), 'r') as f:
+                    scatter_dict = json.load(f)
+            else:
+                scatter_dict = generate_random_scatter_para()
 
-            ###### fix the radiance and edit surface opacity between [0.55, 0.95] * 2 -1 ####
-            for j in range(100):
-                new_surface_opacity = torch.tensor((j+1)/100*0.8+0.1, dtype=torch.float32).unsqueeze(-1).unsqueeze(-1).to(model.device)
-                model.new_surface_opacity = new_surface_opacity
-                # rendering
-                with torch.no_grad():
-                    model.neural_rendering()
-                    # save images
-                    save_images(model, data['num'].item(), oup_dir, j, 'surface_opacity')
+            oup_dir = os.path.join(opt.results_dir, opt.name, opt.phase + '_' + opt.epoch, 'scene_edit', str(num))
+            if not os.path.exists(oup_dir):
+                os.makedirs(oup_dir)
 
-            model.new_surface_opacity = original_surface_opacity  # restore the original parameter
+            with torch.no_grad():
+                model.set_input(data)
+                model.parameter_estimating()
+                model.direct_rendering()
+                # record original estimated parameter
+                g_origin = model.scatter_predict[:, 0:1]
+                sigma_t_origin = model.scatter_predict[:, 1:4]
+                albedo_origin = model.scatter_predict[:, 4:7]
+                radiance_origin = model.scatter_predict[:, 7:8]
+                for i, albedo in enumerate(scatter_dict['albedo']):
+                    model.set_input(data)
+                    model.new_albedo = model.normalize_albedo(torch.tensor(albedo, dtype=torch.float32).expand_as(albedo_origin)).cuda()
+                    model.parameter_estimating()
+                    model.direct_rendering()
+                    model.neural_rendering(mode='albedo')
+                    model.compute_visuals()
+                    save_image(model.albedo_edit_predict/2 + 0.5, 'albedo_{}'.format(i), oup_dir)
 
-            ###### fix the surface opacity edit radiance between [0.35, 0.75] * 2 -1 ####
-            for j in range(100):
-                new_radiance = torch.tensor((j+1)/100*0.8-0.3, dtype=torch.float32).unsqueeze(-1).unsqueeze(-1).to(model.device)
-                model.new_radiance = new_radiance
-                with torch.no_grad():
-                    # rendering
-                    model.neural_rendering()
-                    # save images
-                    save_images(model, data['num'].item(), oup_dir, j, 'radiance')
+                '''for i, sigma_t in enumerate(scatter_dict['sigma_t']):
+                    model.set_input(data)
+                    model.new_sigma_t = model.normalize(torch.tensor(sigma_t, dtype=torch.float32).expand_as(sigma_t_origin)).to('cuda:0')
+                    model.parameter_estimating()
+                    model.direct_rendering()
+                    model.neural_rendering(mode='sigma_t')
+                    model.compute_visuals()
+                    save_image(model.sigma_t_edit_predict/2 + 0.5, 'sigma_t_{}'.format(i), oup_dir)
 
-
-
+                for i, g in enumerate(scatter_dict['g']):
+                    model.set_input(data)
+                    model.new_g = model.normalize_g(torch.tensor(g, dtype=torch.float32).expand_as(g_origin)).to('cuda:0')
+                    model.parameter_estimating()
+                    model.direct_rendering()
+                    model.neural_rendering(mode='g')
+                    model.compute_visuals()
+                    save_image(model.g_edit_predict / 2 + 0.5, 'g_{}'.format(i), oup_dir)'''
 
 
 

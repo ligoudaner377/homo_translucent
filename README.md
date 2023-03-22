@@ -1,5 +1,15 @@
-# Inverse Rendering of Translucent Objects using Physical and Neural Renderers
+# Inverse Scattering
+This is the implementation for the CVPR 2023 paper:
 
+"Inverse Rendering of Translucent Objects using Physical and Neural Renderers"
+
+By [Chenhao Li](https://www.is.ids.osaka-u.ac.jp/author/chenhao-li/ "Chenhao Li"), [Trung Thanh Ngo](https://www.is.ids.osaka-u.ac.jp/author/trung-thanh-ngo/ "Trung Thanh Ngo"), [Hajime Nagahara](https://www.is.ids.osaka-u.ac.jp/author/hajime-nagahara/ "Hajime Nagahara")
+
+[PDF](Files/paper.pdf) | [Dataset]() | [Supplementary document](Files/supp.pdf)
+
+<div  align="center">    
+<img src="Files/real.png" width="700">
+</div>
 
 ## Requirements
 
@@ -18,44 +28,32 @@
 
 ### Test on the real-world objects
 ```bash
-python ./inference_real.py --dataroot "./datasets/real" --dataset_mode "real" --name "twoshot_direct_refine15_2" --model "twoshotr_direct_refine" --eval
-```
-### Scene editing on the real-world objects
-```bash
-python ./scene_edit_real.py --dataroot "./datasets/real" --dataset_mode "real" --name "twoshot_direct_refine15_2" --model "twoshotr_direct_refine" --isEdit True --eval
+python ./inference_real.py --dataroot "./datasets/real" --dataset_mode "real" --name "edit_twoshot" --model "edit_twoshot" --eval
 ```
 
 ### Train
-- Download the dataset. (not ready yet)
+- Download the [dataset](). (not ready yet)
 - Unzip it to ./datasets/
 - To view training results and loss plots, run `python -m visdom.server` and click the URL http://localhost:8097.
-- Pretrain the model (change the gpu_ids based on your device)
+- Train the model (change gpu_ids according your device)
+
 ```bash
-python ./train.py --dataroot "./datasets/translucent" --name "twoshot_direct_refine15_2" --model "twoshotr_direct_refine"  --step init --gpu_ids 0,1,2,3
-```
-- Refine the model (change the gpu_ids based on your device)
-```bash
-python ./train.py --dataroot "./datasets/translucent" --name "twoshot_direct_refine15_2" --model "twoshotr_direct_refine"  --step refine --gpu_ids 0,1,2,3
+python ./train.py --dataroot "./datasets/translucent" --name "edit_twoshot" --model "edit_twoshot" --gpu_ids 0,1,2,3
 ```
 
 ### Test
 ```bash
-python ./test.py --dataroot "./datasets/translucent" --name "twoshot_direct_refine15_2" --model "twoshotr_direct_refine" --eval
+python ./test.py --dataroot "./datasets/translucent" --name "edit_twoshot" --model "edit_twoshot" --eval
 ```
 
-### Scene editing on the synthetic data
-```bash
-python ./scene_edit.py --dataroot "./datasets/translucent" --name "twoshot_direct_refine15_2" --model "twoshotr_direct_refine" --isEdit True --eval
-```
-
-###scripts.sh integrate all the commands
+### scripts.sh integrate all commands
 ```bash
 bash ./scripts.sh
 ```
 
 ## Acknowledgements
 
-Code derived and reshaped from:
+Code derived and modified from:
 
 - [pix2pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix "https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix")
 - [Single-Shot Neural Relighting and SVBRDF Estimation](https://github.com/ssangx/NeuralRelighting "https://github.com/ssangx/NeuralRelighting")

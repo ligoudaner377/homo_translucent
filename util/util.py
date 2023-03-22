@@ -166,6 +166,24 @@ def save_data(model, num, opt):
         direct_l1 = model.imageLoss(direct_image, direct_predict)
         data['direct_l1'] = direct_l1.item()
 
+    if hasattr(model, 'albedo_edit_predict'):
+        albedo_edit_image = model.inverse_normalize(model.albedo_edit_image)
+        albedo_edit_predict = model.inverse_normalize(model.albedo_edit_predict)
+        albedo_edit_l1 = model.imageLoss(albedo_edit_image, albedo_edit_predict)
+        data['albedo_edit_l1'] = albedo_edit_l1.item()
+
+    if hasattr(model, 'g_edit_predict'):
+        g_edit_image = model.inverse_normalize(model.g_edit_image)
+        g_edit_predict = model.inverse_normalize(model.g_edit_predict)
+        g_edit_l1 = model.imageLoss(g_edit_image, g_edit_predict)
+        data['g_edit_l1'] = g_edit_l1.item()
+
+    if hasattr(model, 'sigma_t_edit_predict'):
+        sigma_t_edit_image = model.inverse_normalize(model.sigma_t_edit_image)
+        sigma_t_edit_predict = model.inverse_normalize(model.sigma_t_edit_predict)
+        sigma_t_edit_l1 = model.imageLoss(sigma_t_edit_image, sigma_t_edit_predict)
+        data['sigma_t_edit_l1'] = sigma_t_edit_l1.item()
+
     # save data
     with open(out_file, 'w') as f:
         json.dump(data, f)

@@ -150,8 +150,10 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = ResnetRenderer(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
     elif netG == 'resnet_predictor':
         net = ResnetPredictor(input_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
-    elif netG == 'resnet_predictor_refine':
-        net = ResnetPredictorRefine(input_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
+    elif netG == 'resnet_predictor_surface':
+        net = ResnetPredictorSurface(input_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
+    elif netG == 'resnet_predictor_subsurface':
+        net = ResnetPredictorSubsurface(input_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     return init_net(net, init_type, init_gain, gpu_ids)
@@ -451,7 +453,7 @@ class ResnetPredictor(nn.Module):
         coeff = self.coeff_encoder(feature)
         return (normal, depth, rough, scatter, coeff)
 
-# this is twostage branch
+
 class ResnetPredictorSurface(nn.Module):
     def __init__(self, input_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=9, padding_type='reflect'):
         assert(n_blocks >= 0)
@@ -461,30 +463,8 @@ class ResnetPredictorSurface(nn.Module):
         self.normal_decoder = ImageDecoder(3, ngf, norm_layer)
         self.rough_decoder = ImageDecoder(1, ngf, norm_layer)
         self.depth_decoder = ImageDecoder(1, ngf, norm_layer, isDepth=True)
-        self.radiance_encoder = FeatureEncoder(1, ngf, norm_layer, isActivation=True)
+        self.scatter_encoder = FeatureEncoder(8, ngf, norm_layer, isActivation=True)
         self.coeff_encoder = FeatureEncoder(27, ngf, norm_layer, isActivation=False)
-
-    def forward(self, input):
-        feature = self.feature_encoder(input)
-        normal = self.normal_decoder(feature)
-        depth = self.depth_decoder(feature)
-        rough = self.rough_decoder(feature)
-        radiance = self.radiance_encoder(feature)
-        coeff = self.coeff_encoder(feature)
-        return (normal, depth, rough, radiance, coeff)
-
-class ResnetPredictorRefine(nn.Module):
-
-    def __init__(self, input_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=9, padding_type='reflect'):
-        assert(n_blocks >= 0)
-        super(ResnetPredictorRefine, self).__init__()
-
-        self.feature_encoder = ResnetEncoderRefine(input_nc, ngf, norm_layer, use_dropout, n_blocks, padding_type)
-        self.normal_decoder = ImageDecoderRefine(3, ngf, norm_layer)
-        self.rough_decoder = ImageDecoderRefine(1, ngf, norm_layer)
-        self.depth_decoder = ImageDecoderRefine(1, ngf, norm_layer, isDepth=True)
-        self.scatter_encoder = FeatureEncoderRefine(8, ngf, norm_layer, isActivation=True)
-        self.coeff_encoder = FeatureEncoderRefine(27, ngf, norm_layer, isActivation=False)
 
     def forward(self, input):
         feature = self.feature_encoder(input)
@@ -494,6 +474,21 @@ class ResnetPredictorRefine(nn.Module):
         scatter = self.scatter_encoder(feature)
         coeff = self.coeff_encoder(feature)
         return (normal, depth, rough, scatter, coeff)
+
+
+class ResnetPredictorSubsurface(nn.Module):
+
+    def __init__(self, input_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=9, padding_type='reflect'):
+        assert(n_blocks >= 0)
+        super(ResnetPredictorSubsurface, self).__init__()
+
+        self.feature_encoder = ResnetEncoderSubsurface(input_nc, ngf, norm_layer, use_dropout, n_blocks, padding_type)
+        self.scatter_encoder = FeatureEncoderSubsurface(7, ngf, norm_layer, isActivation=True)
+
+    def forward(self, input):
+        feature = self.feature_encoder(input)
+        scatter = self.scatter_encoder(feature)
+        return scatter
 
 class ResnetEncoder(nn.Module):
     def __init__(self, input_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=9, padding_type='reflect'):
@@ -527,10 +522,10 @@ class ResnetEncoder(nn.Module):
         """Standard forward"""
         return self.model(input)
 
-class ResnetEncoderRefine(nn.Module):
+class ResnetEncoderSubsurface(nn.Module):
     def __init__(self, input_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
         assert(n_blocks >= 0)
-        super(ResnetEncoderRefine, self).__init__()
+        super(ResnetEncoderSubsurface, self).__init__()
         if type(norm_layer) == functools.partial:
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:
@@ -1041,9 +1036,9 @@ class FeatureEncoder(nn.Module):
         """Standard forward"""
         return self.model(input)
 
-class FeatureEncoderRefine(nn.Module):
+class FeatureEncoderSubsurface(nn.Module):
     def __init__(self, output_dim, ngf=64, norm_layer=nn.BatchNorm2d, isActivation=False):
-        super(FeatureEncoderRefine, self).__init__()
+        super(FeatureEncoderSubsurface, self).__init__()
         if type(norm_layer) == functools.partial:
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:

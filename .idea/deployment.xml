@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="lch@10.10.2.16:22" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+    <option name="confirmBeforeUploading" value="false" />
+    <serverData>
+      <paths name="lch@10.10.2.16:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home2/lch/project/homo_translucent" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/datasets/translucent" />
+            <excludedPath path="/home2/lch/project/homo_translucent/datasets/translucent" />
+            <excludedPath local="true" path="$PROJECT_DIR$/checkpoints" />
+            <excludedPath path="/home2/lch/project/homo_translucent/checkpoints" />
+            <excludedPath path="/home2/lch/project/homo_translucent/results" />
+            <excludedPath local="true" path="$PROJECT_DIR$/results" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>

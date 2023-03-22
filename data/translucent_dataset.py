@@ -47,6 +47,7 @@ class TranslucentDataset(BaseDataset):
         BaseDataset.__init__(self, opt)
         self.phase = opt.phase
         self.isTwoshot = opt.isTwoshot
+        self.isEdit = opt.isEdit
         # get scene properties
         csv_path = os.path.join(opt.dataroot, opt.phase + '.csv')
         self.csv = pd.read_csv(csv_path,
@@ -61,9 +62,21 @@ class TranslucentDataset(BaseDataset):
                                       'obj_translate_x', 'obj_translate_y', 'obj_translate_z',
                                       'env_rotate_x', 'env_rotate_y', 'env_rotate_z',
                                       'uv_scale'])
+        csv_edit_path = os.path.join(opt.dataroot, opt.phase + '_edit.csv')
+        self.csv_edit = pd.read_csv(csv_edit_path,
+                                    sep=';',
+                                    header=None,
+                                    index_col=0,
+                                    names=['sigma_t', 'albedo', 'g'])
 
         # get the image paths of your dataset;
+
+        '''if opt.phase == 'train':
+            scene_list = np.load(os.path.join(opt.dataroot, 'scene_list.npy'))
+            self.image_paths = [os.path.join(opt.dataroot, opt.phase, str(num)) for num in scene_list]
+        else:'''
         self.image_paths = sorted(glob.glob(os.path.join(opt.dataroot, opt.phase, '[0-9]*')))
+
         self.transform_rgb = get_transform(grayscale=False)
         self.transform_gray = get_transform(grayscale=True)
 
@@ -111,8 +124,30 @@ class TranslucentDataset(BaseDataset):
             non_flash_image = self.load_image(non_flash_path)
             res['non_flash'] = non_flash_image
 
-        if self.phase == 'train':
-            pass
+        if self.isEdit:
+            albedo_edit_path = os.path.join(base_path, 'albedo.png')
+            albedo_edit_image = self.load_image(albedo_edit_path)
+            res['albedo_edit'] = albedo_edit_image
+
+            sigma_t_edit_path = os.path.join(base_path, 'sigma_t.png')
+            sigma_t_edit_image = self.load_image(sigma_t_edit_path)
+            res['sigma_t_edit'] = sigma_t_edit_image
+
+            g_edit_path = os.path.join(base_path, 'g.png')
+            g_edit_image = self.load_image(g_edit_path)
+            res['g_edit'] = g_edit_image
+
+            new_sigma_t = self.csv_edit['sigma_t'][num]
+            new_sigma_t = torch.tensor([float(i) for i in new_sigma_t.split(',')], dtype=torch.float32)
+            res['new_sigma_t'] = new_sigma_t
+
+            new_albedo = self.csv_edit['albedo'][num]
+            new_albedo = torch.tensor([float(i) for i in new_albedo.split(',')], dtype=torch.float32)
+            res['new_albedo'] = new_albedo
+
+            new_g = self.csv_edit['g'][num]
+            new_g = torch.tensor(new_g, dtype=torch.float32)
+            res['new_g'] = new_g
 
         if self.phase == 'test':
             res['num'] = num

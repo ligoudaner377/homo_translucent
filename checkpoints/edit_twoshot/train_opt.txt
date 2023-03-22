@@ -1,0 +1,48 @@
+----------------- Options ---------------
+               batch_size: 32                            
+                    beta1: 0.5                           
+          checkpoints_dir: ./checkpoints                 
+           continue_train: False                         
+                 dataroot: ./datasets/translucent        	[default: None]
+             dataset_mode: translucent                   
+              display_env: main                          
+             display_freq: 12800                         
+               display_id: 1                             
+            display_ncols: 8                             
+             display_port: 8097                          
+           display_server: http://localhost              
+          display_winsize: 256                           
+                    epoch: latest                        
+              epoch_count: 1                             
+                  gpu_ids: 0,1,2,3                       	[default: 0]
+                init_gain: 0.02                          
+                init_type: normal                        
+                   isEdit: True                          
+               isOptimize: False                         
+                  isTrain: True                          	[default: None]
+                isTwoshot: True                          
+                load_iter: 0                             	[default: 0]
+                       lr: 0.0002                        
+           lr_decay_iters: 50                            
+                lr_policy: linear                        
+         max_dataset_size: inf                           
+                    model: edit_twoshot                  	[default: cycle_gan]
+                 n_epochs: 10                            
+           n_epochs_decay: 10                            
+                     name: edit_twoshot_1                	[default: experiment_name]
+              netLightDec: basic_decoder                 
+             netPredictor: resnet_predictor              
+              netRenderer: resnet_renderer               
+                      ngf: 64                            
+                  no_html: False                         
+              num_threads: 8                             
+                    phase: train                         
+               print_freq: 12800                         
+             save_by_iter: False                         
+          save_epoch_freq: 5                             
+         save_latest_freq: 50000                         
+           serial_batches: False                         
+                   suffix:                               
+         update_html_freq: 12800                         
+                  verbose: False                         
+----------------- End -------------------
