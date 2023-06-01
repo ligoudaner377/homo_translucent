@@ -3,9 +3,9 @@ This is the implementation for the CVPR 2023 paper:
 
 "Inverse Rendering of Translucent Objects using Physical and Neural Renderers"
 
-By [Chenhao Li](https://www.is.ids.osaka-u.ac.jp/author/chenhao-li/ "Chenhao Li"), [Trung Thanh Ngo](https://www.is.ids.osaka-u.ac.jp/author/trung-thanh-ngo/ "Trung Thanh Ngo"), [Hajime Nagahara](https://www.is.ids.osaka-u.ac.jp/author/hajime-nagahara/ "Hajime Nagahara")
+By [Chenhao Li](https://ligoudaner377.github.io/ "Chenhao Li"), [Trung Thanh Ngo](https://www.is.ids.osaka-u.ac.jp/author/trung-thanh-ngo/ "Trung Thanh Ngo"), [Hajime Nagahara](https://www.is.ids.osaka-u.ac.jp/author/hajime-nagahara/ "Hajime Nagahara")
 
-[PDF](Files/paper.pdf) | [Dataset](https://drive.google.com/file/d/150NljNZSuZ648Osy-hMizYYb10jJ44PC/view?usp=share_link) | [Supplementary document](Files/supp.pdf)
+[Project page](https://ligoudaner377.github.io/homo_translucent/) | [arXiv](https://arxiv.org/abs/2305.08336) | [Dataset](https://drive.google.com/file/d/150NljNZSuZ648Osy-hMizYYb10jJ44PC/view?usp=share_link) | [Video](https://www.youtube.com/watch?v=rWZLU_YqacE)
 
 <div  align="center">    
 <img src="Files/real.png" width="700">
@@ -49,6 +49,16 @@ python ./test.py --dataroot "./datasets/translucent" --name "edit_twoshot" --mod
 ### scripts.sh integrate all commands
 ```bash
 bash ./scripts.sh
+```
+## Citation
+
+```bash
+@inproceedings{li2023inverse,
+  title={Inverse Rendering of Translucent Objects using Physical and Neural Renderers},
+  author={Li, Chenhao and Ngo, Trung Thanh and Nagahara, Hajime},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={12510--12520},
+  year={2023}}
 ```
 
 ## Acknowledgements
